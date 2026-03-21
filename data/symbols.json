@@ -1,0 +1,158 @@
+[
+  {
+    "symbol": "Wasser",
+    "mögliche_bedeutungen": [
+      "Emotionen und Gefühlsleben",
+      "Unbewusstes",
+      "Reinigung oder Erneuerung",
+      "Überforderung (bei Flut/Überschwemmung)"
+    ],
+    "emotionen": ["Angst", "Ruhe", "Überwältigung", "Freiheit"],
+    "kontextabhängigkeit": "Klares Wasser vs. trüb, ruhig vs. stürmisch ändert die Bedeutung erheblich.",
+    "quellenart": "Psychoanalytisch / Allgemeine Symbolik",
+    "confidence": 0.7
+  },
+  {
+    "symbol": "Fallen",
+    "mögliche_bedeutungen": [
+      "Kontrollverlust",
+      "Unsicherheit",
+      "Angst vor Versagen",
+      "Loslassen"
+    ],
+    "emotionen": ["Angst", "Panik", "Hilflosigkeit"],
+    "kontextabhängigkeit": "Frei fallen vs. gestoßen werden vs. stolpern verändert die Lesart.",
+    "quellenart": "Häufiges Traummotiv / Forschung",
+    "confidence": 0.75
+  },
+  {
+    "symbol": "Zähne",
+    "mögliche_bedeutungen": [
+      "Sorge um Attraktivität oder Selbstbild",
+      "Angst vor Alterung",
+      "Kommunikationsprobleme",
+      "Machtlosigkeit"
+    ],
+    "emotionen": ["Scham", "Angst", "Ekel"],
+    "kontextabhängigkeit": "Zähne fallen aus vs. brechen vs. wachsen nach.",
+    "quellenart": "Häufiges Traummotiv / Kulturübergreifend",
+    "confidence": 0.65
+  },
+  {
+    "symbol": "Verfolgung",
+    "mögliche_bedeutungen": [
+      "Vermeidung eines Problems",
+      "Angst vor Konfrontation",
+      "Unterdrückte Emotionen",
+      "Stress oder Druck"
+    ],
+    "emotionen": ["Angst", "Panik", "Anspannung"],
+    "kontextabhängigkeit": "Wer oder was verfolgt? Bekannte Person vs. unbekannte Gestalt vs. Tier.",
+    "quellenart": "Psychoanalytisch / Häufiges Motiv",
+    "confidence": 0.75
+  },
+  {
+    "symbol": "Fliegen",
+    "mögliche_bedeutungen": [
+      "Freiheitsgefühl",
+      "Über Problemen stehen",
+      "Wunsch nach Kontrolle",
+      "Luzides Träumen"
+    ],
+    "emotionen": ["Euphorie", "Freiheit", "Angst (bei Absturz)"],
+    "kontextabhängigkeit": "Selbstbestimmtes Fliegen vs. unkontrollierbares Schweben.",
+    "quellenart": "Häufiges Traummotiv",
+    "confidence": 0.7
+  },
+  {
+    "symbol": "Haus",
+    "mögliche_bedeutungen": [
+      "Das Selbst / die Psyche",
+      "Lebensphasen (Stockwerke)",
+      "Familie und Geborgenheit",
+      "Verborgene Räume = verborgene Aspekte"
+    ],
+    "emotionen": ["Geborgenheit", "Neugier", "Unbehagen", "Nostalgie"],
+    "kontextabhängigkeit": "Bekanntes vs. fremdes Haus, Zustand (verfallen vs. neu), welcher Raum.",
+    "quellenart": "Psychoanalytisch (Jung)",
+    "confidence": 0.7
+  },
+  {
+    "symbol": "Schule",
+    "mögliche_bedeutungen": [
+      "Leistungsdruck",
+      "Unerledigte Aufgaben",
+      "Prüfungsangst",
+      "Lernen und Wachstum"
+    ],
+    "emotionen": ["Stress", "Scham", "Nostalgie"],
+    "kontextabhängigkeit": "Prüfungssituation vs. einfach anwesend sein vs. sich verirren.",
+    "quellenart": "Häufiges Traummotiv",
+    "confidence": 0.7
+  },
+  {
+    "symbol": "Zug/Bus",
+    "mögliche_bedeutungen": [
+      "Lebensweg und -richtung",
+      "Verpasste Gelegenheiten (Zug verpassen)",
+      "Mangelnde Kontrolle über die eigene Richtung",
+      "Übergänge"
+    ],
+    "emotionen": ["Hektik", "Frustration", "Resignation"],
+    "kontextabhängigkeit": "Verpassen vs. einsteigen vs. falscher Zug.",
+    "quellenart": "Allgemeine Symbolik",
+    "confidence": 0.6
+  },
+  {
+    "symbol": "Tote Verwandte",
+    "mögliche_bedeutungen": [
+      "Trauer und Verarbeitung",
+      "Sehnsucht nach Verbindung",
+      "Unerledigtes mit der Person",
+      "Innere Weisheit oder Führung"
+    ],
+    "emotionen": ["Trauer", "Trost", "Verwirrung", "Frieden"],
+    "kontextabhängigkeit": "Spricht die Person? Ist sie stumm? Wirkt sie glücklich oder traurig?",
+    "quellenart": "Trauerprozess-Forschung / Kulturell",
+    "confidence": 0.6
+  },
+  {
+    "symbol": "Nacktheit",
+    "mögliche_bedeutungen": [
+      "Verletzlichkeit",
+      "Angst vor Bloßstellung",
+      "Authentizität und Offenheit",
+      "Scham"
+    ],
+    "emotionen": ["Scham", "Angst", "Befreiung"],
+    "kontextabhängigkeit": "Öffentlich vs. privat, bemerken andere die Nacktheit oder nicht?",
+    "quellenart": "Häufiges Traummotiv / Kulturübergreifend",
+    "confidence": 0.7
+  },
+  {
+    "symbol": "Tiere",
+    "mögliche_bedeutungen": [
+      "Instinkte und Triebe",
+      "Bestimmte Charaktereigenschaften",
+      "Begleiter oder Bedrohung",
+      "Natürlichkeit"
+    ],
+    "emotionen": ["Angst", "Zuneigung", "Faszination"],
+    "kontextabhängigkeit": "Tierart ist entscheidend: Schlange, Hund, Spinne, Vogel haben sehr unterschiedliche Konnotationen.",
+    "quellenart": "Archetypisch (Jung) / Kulturell",
+    "confidence": 0.6
+  },
+  {
+    "symbol": "Tod",
+    "mögliche_bedeutungen": [
+      "Ende und Neuanfang",
+      "Transformation",
+      "Loslassen von Altem",
+      "Angst vor Vergänglichkeit"
+    ],
+    "emotionen": ["Angst", "Trauer", "Erleichterung", "Akzeptanz"],
+    "kontextabhängigkeit": "Eigener Tod vs. Tod anderer, friedlich vs. gewaltsam.",
+    "quellenart": "Psychoanalytisch / Archetypisch",
+    "confidence": 0.65
+  }
+]
