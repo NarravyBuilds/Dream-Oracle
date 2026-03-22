@@ -238,6 +238,24 @@ CSS = """
 ::-webkit-scrollbar-track { background: #1A1714; }
 ::-webkit-scrollbar-thumb { background: #3A3530; border-radius: 3px; }
 footer { display: none !important; }
+.gradio-container button.primary {
+    background: linear-gradient(135deg, #2A2520, #3A3025) !important;
+    border: 1px solid #C4A882 !important;
+    color: #C4A882 !important;
+    font-family: 'Cormorant Garamond', serif !important;
+    font-size: 1.1em !important;
+    font-weight: 500 !important;
+    letter-spacing: 1px;
+    border-radius: 10px !important;
+    padding: 12px 20px !important;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-height: 44px !important;
+}
+.gradio-container button.primary:hover {
+    background: linear-gradient(135deg, #3A3025, #4A3F30) !important;
+    box-shadow: 0 0 12px rgba(196,168,130,0.2) !important;
+}
 """
 
 with gr.Blocks(css=CSS) as demo:
@@ -250,11 +268,20 @@ with gr.Blocks(css=CSS) as demo:
     """)
 
     chatbot = gr.Chatbot(height=480, show_label=False)
-    msg = gr.Textbox(
-        placeholder="Beschreibe deinen Traum...",
-        label="Dein Traum",
-        lines=2,
-    )
+
+    with gr.Row():
+        msg = gr.Textbox(
+            placeholder="Beschreibe deinen Traum...",
+            label="Dein Traum",
+            lines=2,
+            scale=4,
+        )
+        submit_btn = gr.Button(
+            "🌙 Deuten",
+            variant="primary",
+            scale=1,
+            min_width=100,
+        )
 
     def respond(message, history):
         history = history or []
@@ -264,6 +291,7 @@ with gr.Blocks(css=CSS) as demo:
         return "", history
 
     msg.submit(respond, [msg, chatbot], [msg, chatbot])
+    submit_btn.click(respond, [msg, chatbot], [msg, chatbot])
 
 if __name__ == "__main__":
     demo.launch()
