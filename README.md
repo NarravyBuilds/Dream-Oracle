@@ -142,20 +142,18 @@ Dream Oracle folgt klaren ethischen Leitlinien:
 
 ## ✦ Datenschutz
 
-- **Keine Speicherung** <br>
-Traum-Texte werden nicht geloggt, nicht in Datenbanken geschrieben, nicht getrackt<br>
-</br>
-- **Externe API** <br>
-Zur Deutung wird der Text an die Hugging Face Inference API gesendet (Llama 3.2). Der API-Anbieter könnte Anfragen temporär protokollieren<br>
-</br>
-- **Gradio Analytics** <br>
-Deaktiviert (`analytics_enabled=False`)<br>
-</br>
-- **Zukunftsvision** <br>
-Vollständig lokale und offline Deutung, sodass kein Text jemals das Gerät verlässt<br>
-</br>
+**Keine Speicherung**  
+Traum-Texte werden nicht geloggt, nicht in Datenbanken geschrieben, nicht getrackt  
 
----
+**Externe API**  
+Text wird an die Hugging Face Inference API (Llama 3.2) gesendet.  
+Der Anbieter könnte Anfragen temporär protokollieren  
+
+**Gradio Analytics**  
+Deaktiviert (`analytics_enabled=False`)  
+
+**Zukunftsvision**  
+Vollständig lokale, offline Deutung – kein Text verlässt das Gerät
 
 ## ✦ Live Demo
 
