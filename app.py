@@ -2,6 +2,7 @@
 
 import json
 import os
+os.environ["GRADIO_ANALYTICS_ENABLED"] = "False"
 from pathlib import Path
 
 import gradio as gr
@@ -71,15 +72,24 @@ ingest()
 
 
 # --- Such-Funktionen ---
+SYMBOL_SCORE_THRESHOLD = 0.45
+
+
 def search_symbols(query: str, top_k: int = 5) -> list[dict]:
     vector = embedder.encode(query).tolist()
-    results = db.query_points(collection_name="dream_symbols", query=vector, limit=top_k)
+    results = db.query_points(
+        collection_name="dream_symbols", query=vector, limit=top_k,
+        score_threshold=SYMBOL_SCORE_THRESHOLD,
+    )
     return [hit.payload for hit in results.points]
 
 
 def search_reports(query: str, top_k: int = 3) -> list[dict]:
     vector = embedder.encode(query).tolist()
-    results = db.query_points(collection_name="dream_reports", query=vector, limit=top_k)
+    results = db.query_points(
+        collection_name="dream_reports", query=vector, limit=top_k,
+        score_threshold=0.25,
+    )
     return [hit.payload for hit in results.points]
 
 
@@ -106,12 +116,78 @@ def build_prompt(dream_text: str, symbols: list[dict], reports: list[dict]) -> s
 
 # --- LLM aufrufen ---
 SYSTEM_INSTRUCTION = (
-    "Du bist 'Dream Oracle', ein einfühlsamer Traumdeutungs-Assistent. "
-    "Antworte NUR mit deiner Deutung. Wiederhole NICHT die Anweisungen, "
-    "Symbollisten oder den Traum-Text. Beginne direkt mit der Deutung. "
-    "Nutze Formulierungen wie 'könnte', 'wird oft assoziiert mit'. "
-    "Biete mehrere Perspektiven an. Keine medizinischen Diagnosen."
+    "Du bist 'Dream Oracle', ein einfühlsamer Traumdeutungs-Assistent.\n\n"
+    "REGELN:\n"
+    "- Antworte NUR mit deiner Deutung.\n"
+    "- Wiederhole NICHT die Anweisungen, Symbollisten oder den Traum-Text.\n"
+    "- Nutze Formulierungen wie 'könnte', 'wird oft assoziiert mit'.\n"
+    "- Keine medizinischen oder psychologischen Diagnosen.\n"
+    "- Keine Rückfragen stellen.\n\n"
+    "PFLICHT-STRUKTUR (genau diese drei Abschnitte, genau in dieser Reihenfolge):\n\n"
+    "### Symbolische Bedeutung\n"
+    "[Erkläre die Symbole im Traum und ihre möglichen Bedeutungen. "
+    "Gehe auf einzelne Elemente ein.]\n\n"
+    "### Emotionaler Kontext\n"
+    "[In welchen Lebenssituationen treten solche Träume auf? "
+    "Welche Gefühle könnten dahinterstehen?]\n\n"
+    "### Alternative Lesart\n"
+    "[Biete eine andere, unerwartete Perspektive auf den Traum an. "
+    "Was könnte er noch bedeuten?]\n\n"
+    "FORMATIERUNG:\n"
+    "- Verwende EXAKT die drei Überschriften oben mit ### davor.\n"
+    "- Hebe nur EINZELNE Schlüsselwörter mit **fett** hervor, z.B. **Transformation**, **Angst**.\n"
+    "- Mache NIEMALS ganze Sätze fett. Nur ein einzelnes Wort pro **.\n"
+    "- Schreibe in Fließtext-Absätzen, keine Aufzählungslisten.\n"
 )
+
+
+def style_answer(text: str, dream_text: str = "") -> str:
+    """Wandelt Markdown in elegante HTML-Formatierung um."""
+    import re
+
+    # SCHRITT 1: Traum-Text in Anführungszeichen golden färben (VOR HTML-Konvertierung)
+    # Verschiedene Anführungszeichen-Stile abfangen
+    text = re.sub(
+        r'[„""\"]([^""„"\"]{3,})[""„"\"]',
+        r'<gold-quote>\1</gold-quote>',
+        text,
+    )
+
+    # SCHRITT 2: ### Überschriften → goldene Überschriften
+    text = re.sub(
+        r"^###\s*(.+)$",
+        r'<h3 class="oracle-heading">\1</h3>',
+        text,
+        flags=re.MULTILINE,
+    )
+
+    # SCHRITT 3: **fett** → je nach Länge Überschrift oder Schlüsselwort
+    def bold_handler(match):
+        content = match.group(1)
+        if len(content.split()) >= 4:
+            return f'<h3 class="oracle-heading">{content}</h3>'
+        return f'<strong class="oracle-keyword">{content}</strong>'
+
+    text = re.sub(r"\*\*(.+?)\*\*", bold_handler, text)
+
+    # SCHRITT 4: Gold-Quote Platzhalter durch echtes HTML ersetzen
+    text = text.replace(
+        '<gold-quote>',
+        '<span class="oracle-keyword" style="font-style:italic;">„'
+    )
+    text = text.replace('</gold-quote>', '"</span>')
+
+    # SCHRITT 5: Original-Traumtext hervorheben (falls nicht schon in Anführungszeichen)
+    if dream_text and len(dream_text) > 5:
+        escaped = re.escape(dream_text)
+        text = re.sub(
+            rf'(?<!„)({escaped})(?!")',
+            r'<span class="oracle-keyword" style="font-style:italic;">\1</span>',
+            text,
+            count=1,
+        )
+
+    return text
 
 
 def call_llm(prompt: str) -> str:
@@ -132,28 +208,94 @@ def call_llm(prompt: str) -> str:
     resp.raise_for_status()
     raw = resp.json()["choices"][0]["message"]["content"]
 
-    # Clean: Falls das Modell den Prompt zurückgibt, nur den Teil nach "Gesamtdeutung" nehmen
-    for marker in ["**Gesamtdeutung:**", "Gesamtdeutung:"]:
+    raw = _clean_llm_output(raw)
+    return raw.strip()
+
+
+def _clean_llm_output(raw: str) -> str:
+    """Entfernt alle Template-Fragmente und Prompt-Leaks aus der LLM-Antwort."""
+    import re
+
+    # --- SCHRITT 1: Alles VOR der eigentlichen Deutung abschneiden ---
+    # Suche den frühesten sinnvollen Deutungs-Start
+    start_markers = [
+        "Gesamtdeutung:", "**Gesamtdeutung:**", "### Gesamtdeutung",
+        "Deine Aufgabe:", "**Deine Aufgabe:**",
+    ]
+    for marker in start_markers:
         if marker in raw:
             raw = raw.split(marker, 1)[1]
             break
 
-    # Entferne restliche Template-Fragmente
-    for noise in [
-        "**Deine Aufgabe:**",
+    # --- SCHRITT 2: Alles NACH unerwünschten Endmarkern abschneiden ---
+    # Wenn das Modell am Ende nochmal Prompt-Teile wiederholt
+    end_cutoff_patterns = [
         "**Deine Grundsätze:**",
         "Du bist \"Dream Oracle\"",
         "Du bist 'Dream Oracle'",
-        "**Symbolische Bedeutung:**",
         "**Passende Symbole aus der Wissensbasis:**",
-        "**Ähnliche Traumberichte",
-        "**Der Traum:",
-        "**Persönlicher Kontext:**",
-    ]:
-        if noise in raw:
-            raw = raw.split(noise, 1)[0]
+        "Passende Symbole aus der Wissensbasis",
+        "**Ähnliche Traumberichte anderer Menschen:**",
+        "Ähnliche Traumberichte anderer Menschen",
+    ]
+    for pattern in end_cutoff_patterns:
+        if pattern in raw:
+            raw = raw.split(pattern, 1)[0]
 
-    return raw.strip()
+    # --- SCHRITT 3: Einzelne Template-Zeilen entfernen ---
+    noise_lines = [
+        "### Der Traum",
+        "**Der Traum:**",
+        "**Der Traum",
+        "Der Traum:",
+        "### Persönlicher Kontext",
+        "**Persönlicher Kontext:**",
+        "**Persönlicher Kontext",
+        "Persönlicher Kontext:",
+        "Kein zusätzlicher Kontext angegeben.",
+        "### Deine Aufgabe",
+        "**Deine Aufgabe:**",
+        "**Deine Aufgabe",
+        "Deine Aufgabe:",
+        "### Passende Symbole",
+        "**Passende Symbole",
+        "Passende Symbole aus der Wissensbasis:",
+        "### Ähnliche Traumberichte",
+        "**Ähnliche Traumberichte",
+        "Ähnliche Traumberichte anderer Menschen:",
+        "### Rückfrage",
+        "**Rückfrage:**",
+        "Rückfrage:",
+    ]
+
+    cleaned_lines = []
+    for line in raw.split("\n"):
+        stripped = line.strip()
+        # Überspringe leere Zeilen am Anfang
+        if not cleaned_lines and not stripped:
+            continue
+        # Überspringe exakte Noise-Matches
+        skip = False
+        for noise in noise_lines:
+            if stripped == noise or stripped == noise.rstrip(":"):
+                skip = True
+                break
+        if not skip:
+            cleaned_lines.append(line)
+
+    raw = "\n".join(cleaned_lines)
+
+    # --- SCHRITT 4: Rückfrage am Ende komplett entfernen ---
+    # Das Modell stellt manchmal am Ende eine Rückfrage
+    rq_patterns = [
+        r"Rückfrage:.*$",
+        r"\*\*Rückfrage:\*\*.*$",
+        r"### Rückfrage.*$",
+    ]
+    for pat in rq_patterns:
+        raw = re.sub(pat, "", raw, flags=re.DOTALL)
+
+    return raw
 
 
 # --- UI-Hilfsfunktionen ---
@@ -181,6 +323,7 @@ def interpret(message: str, history: list[dict]) -> str:
     reports = search_reports(message, top_k=3)
     prompt = build_prompt(message, symbols, reports)
     answer = call_llm(prompt)
+    answer = style_answer(answer, dream_text=message)
 
     motifs = [s.get("symbol", "") for s in symbols if s.get("symbol")]
     badges = motif_badges(motifs)
@@ -241,6 +384,53 @@ CSS = """
     font-size: 1.15em !important;
     letter-spacing: 0.5px;
 }
+.oracle-heading {
+    font-family: 'Cormorant Garamond', serif !important;
+    color: #C4A882 !important;
+    font-weight: 500 !important;
+    font-size: 1.45em !important;
+    letter-spacing: 0.5px;
+    margin: 24px 0 10px !important;
+}
+.oracle-keyword {
+    color: #C4A882 !important;
+    font-weight: 500 !important;
+}
+/* --- User Bubble --- */
+.gradio-container .chatbot .message-wrap .message.user {
+    background: linear-gradient(135deg, #2A2520, #1E1B17) !important;
+    border: 1px solid rgba(196,168,130,0.3) !important;
+    border-radius: 16px 16px 4px 16px !important;
+    padding: 10px 18px !important;
+    max-width: 75% !important;
+    color: #C4A882 !important;
+    font-family: 'Cormorant Garamond', serif !important;
+    font-size: 1.1em !important;
+    font-style: italic;
+    letter-spacing: 0.5px;
+    line-height: 1.5 !important;
+    animation: dream-glow 1.2s ease-out;
+}
+/* --- Bot Bubble --- */
+.gradio-container .chatbot .message-wrap .message.bot {
+    background: transparent !important;
+    border: none !important;
+    padding: 10px 4px !important;
+}
+/* --- Glow Animation --- */
+@keyframes dream-glow {
+    0% {
+        box-shadow: 0 0 20px rgba(196,168,130,0.5), 0 0 40px rgba(196,168,130,0.2);
+        border-color: rgba(196,168,130,0.7);
+    }
+    50% {
+        box-shadow: 0 0 10px rgba(196,168,130,0.3), 0 0 20px rgba(196,168,130,0.1);
+    }
+    100% {
+        box-shadow: none;
+        border-color: rgba(196,168,130,0.3);
+    }
+}
 .message hr {
     border: none !important;
     height: 1px !important;
@@ -290,6 +480,53 @@ footer { display: none !important; }
     background: linear-gradient(135deg, #3A3025, #4A3F30) !important;
     box-shadow: 0 0 12px rgba(196,168,130,0.2) !important;
 }
+.pdf-export-btn button, button.secondary {
+    width: 100% !important;
+    background: transparent !important;
+    border: 1px solid rgba(196,168,130,0.25) !important;
+    color: #7A7168 !important;
+    font-family: 'Cormorant Garamond', serif !important;
+    font-size: 0.95em !important;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    border-radius: 10px !important;
+    padding: 10px 20px !important;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 4px;
+}
+.pdf-export-btn button:hover, button.secondary:hover {
+    border-color: #C4A882 !important;
+    color: #C4A882 !important;
+    box-shadow: 0 0 8px rgba(196,168,130,0.15);
+}
+.privacy-notice {
+    text-align: center;
+    padding: 16px 20px;
+    margin-top: 12px;
+    font-family: 'Inter', sans-serif;
+    font-size: 11.5px;
+    line-height: 1.6;
+    color: #5A5550;
+    letter-spacing: 0.2px;
+}
+.privacy-notice summary {
+    cursor: pointer;
+    color: #7A7168;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    list-style: none;
+}
+.privacy-notice summary::-webkit-details-marker { display: none; }
+.privacy-notice summary::before { content: "🔒 "; }
+.privacy-notice .detail-text {
+    margin-top: 10px;
+    padding: 12px 16px;
+    background: rgba(26,23,20,0.5);
+    border: 1px solid #2A2520;
+    border-radius: 8px;
+    text-align: left;
+}
 """
 
 with gr.Blocks(css=CSS) as demo:
@@ -302,7 +539,7 @@ with gr.Blocks(css=CSS) as demo:
         </div>
     """)
 
-    chatbot = gr.Chatbot(height=480, show_label=False)
+    chatbot = gr.Chatbot(height=480, show_label=False, sanitize_html=False)
 
     msg = gr.Textbox(
         placeholder="Beschreibe deinen Traum...",
@@ -313,16 +550,257 @@ with gr.Blocks(css=CSS) as demo:
         "🌙 Deuten",
         variant="primary",
     )
+    pdf_btn = gr.Button(
+        "📜 Deutung speichern",
+        variant="secondary",
+        elem_classes=["pdf-export-btn"],
+    )
+    pdf_file = gr.File(label="Download", visible=False)
 
-    def respond(message, history):
+    # Speichert die letzte Deutung für den PDF-Export
+    last_dream = gr.State("")
+    last_answer = gr.State("")
+
+    gr.HTML("""
+        <div class="privacy-notice">
+            <details>
+                <summary>Datenschutzhinweis</summary>
+                <div class="detail-text">
+                    <strong style="color:#C4A882;">Wie werden deine Daten verarbeitet?</strong><br><br>
+                    Dein Traum-Text wird <em>nicht</em> gespeichert. Es gibt keine Datenbank,
+                    kein Logging und kein Tracking deiner Eingaben auf diesem Server.<br><br>
+                    <strong style="color:#C4A882;">Was passiert bei der Deutung?</strong><br><br>
+                    Zur Erzeugung der Deutung wird dein Text an die
+                    <strong>Hugging Face Inference API</strong> gesendet, um ein Sprachmodell
+                    (Llama 3.2) zu nutzen. Das bedeutet, dass dein Text den Server verlässt
+                    und von einem externen Dienst verarbeitet wird. Hugging Face könnte
+                    Anfragen temporär protokollieren (z.&nbsp;B. zur Fehlerbehebung oder
+                    Missbrauchserkennung).<br><br>
+                    <strong style="color:#C4A882;">Empfehlung</strong><br><br>
+                    Teile keine persönlichen Informationen (Namen, Orte, Daten), die dich
+                    identifizierbar machen. Beschreibe deinen Traum so, dass er für sich
+                    allein steht.<br><br>
+                    <span style="color:#5A5550;font-size:10.5px;">
+                        Dream Oracle befindet sich in aktiver Entwicklung. Unser Ziel ist es,
+                        die Deutung zukünftig vollständig lokal und offline durchzuführen,
+                        sodass kein Text jemals dieses Gerät verlässt.
+                    </span>
+                </div>
+            </details>
+        </div>
+    """)
+
+    def respond(message, history, _dream, _ans):
+        if not message or not message.strip():
+            return "", history or [], _dream, _ans
         history = history or []
         history.append({"role": "user", "content": message})
         answer = interpret(message, history)
         history.append({"role": "assistant", "content": answer})
-        return "", history
+        return "", history, message, answer
 
-    msg.submit(respond, [msg, chatbot], [msg, chatbot])
-    submit_btn.click(respond, [msg, chatbot], [msg, chatbot])
+    def export_pdf(dream, answer):
+        if not answer:
+            return gr.update(visible=False)
+        import re
+        import os
+        import urllib.request
+        from datetime import date
+        from fpdf import FPDF
+
+        # --- Font Setup ---
+        font_dir = "/tmp/dream_oracle_fonts"
+        os.makedirs(font_dir, exist_ok=True)
+        font_regular = os.path.join(font_dir, "DejaVuSans.ttf")
+        font_bold = os.path.join(font_dir, "DejaVuSans-Bold.ttf")
+        font_italic = os.path.join(font_dir, "DejaVuSans-Oblique.ttf")
+        # Cormorant Garamond liegt im Repo
+        font_title = str(Path(__file__).parent / "app" / "fonts" / "CormorantGaramond-Regular.ttf")
+
+        # DejaVuSans nur herunterladen wenn nicht vorhanden
+        dejavu_downloads = [
+            (font_regular, "https://github.com/dejavu-fonts/dejavu-fonts/raw/main/src/DejaVuSans.ttf"),
+            (font_bold, "https://github.com/dejavu-fonts/dejavu-fonts/raw/main/src/DejaVuSans-Bold.ttf"),
+            (font_italic, "https://github.com/dejavu-fonts/dejavu-fonts/raw/main/src/DejaVuSans-Oblique.ttf"),
+        ]
+
+        for fpath, url in dejavu_downloads:
+            if not os.path.exists(fpath):
+                try:
+                    urllib.request.urlretrieve(url, fpath)
+                except Exception:
+                    pass
+
+        # --- Clean HTML for PDF rendering ---
+        def clean_for_pdf(html_text):
+            """Convert our styled HTML to simple HTML that fpdf2 can render."""
+            text = html_text
+
+            # Remove badge spans (the motif tags at the top)
+            text = re.sub(r'<span style="background:rgba\(180.*?</span>', '', text)
+
+            # Remove --- dividers
+            text = re.sub(r'\n?---\n?', '\n', text)
+            text = re.sub(r'^---$', '', text, flags=re.MULTILINE)
+
+            # Convert our oracle-heading h3 to marker
+            text = re.sub(r'<h3[^>]*>(.*?)</h3>', r'\n§H§\1§/H§\n', text, flags=re.DOTALL)
+
+            # Convert oracle-keyword strong to simple <b>
+            text = re.sub(r'<strong[^>]*>(.*?)</strong>', r'<b>\1</b>', text)
+
+            # Convert markdown **bold** to <b>
+            text = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', text)
+
+            # Convert gold-quote spans to <i>
+            text = re.sub(r'<span[^>]*style="[^"]*font-style:italic[^"]*"[^>]*>(.*?)</span>', r'<i>\1</i>', text)
+
+            # Remove all remaining HTML tags except b, i, br
+            text = re.sub(r'<(?!/?[bi][ >]|br)[^>]+>', '', text)
+
+            # Clean HTML entities
+            text = text.replace('&middot;', '-').replace('&nbsp;', ' ')
+
+            # Clean up whitespace
+            text = re.sub(r'\n{3,}', '\n\n', text)
+
+            return text.strip()
+
+        cleaned = clean_for_pdf(answer)
+
+        # Split into heading blocks and text blocks
+        parts = re.split(r'(§H§.*?§/H§)', cleaned, flags=re.DOTALL)
+
+        # --- Build PDF ---
+        class DarkPDF(FPDF):
+            def header(self):
+                self.set_fill_color(26, 23, 20)
+                self.rect(0, 0, 210, 297, 'F')
+
+        pdf = DarkPDF()
+        pdf.set_auto_page_break(auto=True, margin=25)
+        pdf.add_page()
+
+        # Register Unicode fonts if available
+        use_unicode = os.path.exists(font_regular)
+        if use_unicode:
+            pdf.add_font("Dream", "", font_regular)
+            pdf.add_font("Dream", "B", font_bold)
+            pdf.add_font("Dream", "I", font_italic)
+            fn = "Dream"
+        else:
+            fn = "Helvetica"
+
+        # Register Cormorant Garamond for title
+        use_title_font = os.path.exists(font_title)
+        if use_title_font:
+            pdf.add_font("Cormorant", "", font_title)
+            tfn = "Cormorant"
+        else:
+            tfn = fn
+
+        # --- HEADER: Cormorant Garamond like the website ---
+        pdf.set_text_color(196, 168, 130)
+        pdf.set_font(tfn, "", 36)
+        pdf.cell(0, 26, "DREAM  ORACLE", align="C", new_x="LMARGIN", new_y="NEXT")
+
+        # Tagline
+        pdf.set_text_color(122, 113, 104)
+        pdf.set_font(fn, "", 9)
+        tagline = "Erzahl mir deinen Traum und ich helfe dir, ihn zu verstehen."
+        if use_unicode:
+            tagline = "Erzähl mir deinen Traum und ich helfe dir, ihn zu verstehen."
+        pdf.cell(0, 6, tagline, align="C", new_x="LMARGIN", new_y="NEXT")
+
+        # Gold divider
+        pdf.ln(6)
+        pdf.set_draw_color(196, 168, 130)
+        pdf.line(75, pdf.get_y(), 135, pdf.get_y())
+        pdf.ln(12)
+
+        # --- DREAM INPUT ---
+        pdf.set_text_color(196, 168, 130)
+        pdf.set_font(fn, "I", 14)
+        dream_text = dream if use_unicode else dream.encode('latin-1', 'replace').decode('latin-1')
+        x_start = 25
+        box_width = 160
+        pdf.set_x(x_start)
+        y_before = pdf.get_y()
+        pdf.multi_cell(box_width, 8, f'"{dream_text}"', align="C")
+        y_after = pdf.get_y()
+        pdf.set_draw_color(196, 168, 130)
+        pdf.set_line_width(0.3)
+        pdf.rect(x_start - 5, y_before - 3, box_width + 10, (y_after - y_before) + 6)
+        pdf.ln(12)
+
+        # --- CONTENT ---
+        left_margin = 15
+        content_width = 180
+
+        for part in parts:
+            part = part.strip()
+            if not part:
+                continue
+
+            if pdf.get_y() > 265:
+                pdf.add_page()
+
+            # Heading
+            h_match = re.match(r'§H§(.*?)§/H§', part, re.DOTALL)
+            if h_match:
+                heading = h_match.group(1).strip().rstrip(":")
+                heading = re.sub(r'<[^>]+>', '', heading)  # strip any tags inside heading
+                if not use_unicode:
+                    heading = heading.encode('latin-1', 'replace').decode('latin-1')
+                pdf.ln(5)
+                pdf.set_x(left_margin)
+                pdf.set_text_color(196, 168, 130)
+                pdf.set_font(fn, "B", 14)
+                pdf.multi_cell(content_width, 8, heading)
+                pdf.set_draw_color(196, 168, 130)
+                pdf.line(left_margin, pdf.get_y() + 1, left_margin + 40, pdf.get_y() + 1)
+                pdf.ln(5)
+            else:
+                # Regular text with inline bold/italic via write_html
+                # Clean for write_html: only <b>, <i>, <br> allowed
+                block = part.strip()
+                block = re.sub(r'<(?!/?[bi][ >]|br)[^>]+>', '', block)
+                # Remove bullet markers
+                block = re.sub(r'^\s*[\-\*]\s*', '', block, flags=re.MULTILINE)
+                # Convert newlines to <br> for write_html
+                block = block.replace('\n\n', '<br><br>').replace('\n', '<br>')
+                block = re.sub(r'(<br>){3,}', '<br><br>', block)
+
+                if not use_unicode:
+                    block = block.encode('latin-1', 'replace').decode('latin-1')
+
+                if block.strip() and block.strip() != '<br>':
+                    pdf.set_x(left_margin)
+                    pdf.set_text_color(212, 204, 196)
+                    pdf.set_font(fn, "", 10.5)
+                    # write_html handles <b> and <i> inline
+                    pdf.write_html(f'<font color="#D4CCC4">{block}</font>')
+                    pdf.ln(4)
+
+        # --- FOOTER ---
+        pdf.ln(8)
+        if pdf.get_y() > 275:
+            pdf.add_page()
+        pdf.set_draw_color(42, 37, 32)
+        pdf.line(left_margin, pdf.get_y(), 195, pdf.get_y())
+        pdf.ln(5)
+        pdf.set_text_color(90, 85, 80)
+        pdf.set_font(fn, "", 8)
+        footer_date = date.today().strftime('%d.%m.%Y')
+        pdf.cell(0, 5, f"Dream Oracle  |  {footer_date}", align="C")
+
+        path = "/tmp/dream_oracle.pdf"
+        pdf.output(path)
+        return gr.update(value=path, visible=True)
+
+    msg.submit(respond, [msg, chatbot, last_dream, last_answer], [msg, chatbot, last_dream, last_answer])
+    submit_btn.click(respond, [msg, chatbot, last_dream, last_answer], [msg, chatbot, last_dream, last_answer])
+    pdf_btn.click(export_pdf, [last_dream, last_answer], [pdf_file])
 
 if __name__ == "__main__":
     demo.launch()
