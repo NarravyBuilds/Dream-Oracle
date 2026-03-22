@@ -56,7 +56,7 @@ Handgestaltetes UI mit Cormorant Garamond, Gold-Akzenten und cinematischer Atmos
 📱 **Mobile-Ready**<br>
 Optimiert für Smartphone mit dediziertem Submit-Button
 </br>
-<br>
+
 ---
 
 ## ✦ Architektur
