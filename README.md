@@ -145,7 +145,7 @@ Dream Oracle folgt klaren ethischen Leitlinien:
 
 <div align="center">
 
-*Built with 🌙 by [Narravy](https://github.com/NarravyBuilds)*
+*🌙 Built by [Narravy](https://github.com/NarravyBuilds)*
 
 <sub>Ein Projekt von Narravy — wo Technologie auf Träume trifft.</sub>
 
