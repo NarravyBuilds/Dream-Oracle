@@ -146,14 +146,15 @@ Dream Oracle folgt klaren ethischen Leitlinien:
 Traum-Texte werden nicht geloggt, nicht in Datenbanken geschrieben, nicht getrackt<br>
 </br>
 - **Externe API**<br>
-Zur Deutung wird der Text an die Hugging Face Inference API gesendet (Llama 3.2). Der API-Anbieter könnte Anfragen temporär protokollieren
-<br></br>
+Zur Deutung wird der Text an die Hugging Face Inference API gesendet (Llama 3.2). Der API-Anbieter könnte Anfragen temporär protokollieren<br>
+</br>
 - **Gradio Analytics**<br>
 Deaktiviert (`analytics_enabled=False`)<br>
 </br>
 - **Zukunftsvision**<br>
-Vollständig lokale und offline Deutung, sodass kein Text jemals das Gerät verlässt
+Vollständig lokale und offline Deutung, sodass kein Text jemals das Gerät verlässt<br>
 </br>
+
 ---
 
 ## ✦ Live Demo
