@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🌙 Dream Oracle
+# 🌙 Narravy Dream Oracle
 
 **Erzähl mir deinen Traum und ich helfe dir, ihn zu verstehen.**
 
