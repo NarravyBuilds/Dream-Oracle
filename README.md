@@ -33,9 +33,9 @@ Dream Oracle behauptet nie, die eine wahre Bedeutung zu kennen — er bietet Per
 
 ## ✦ Features
 
-🔮 **Symbolerkennung**
+🔮 **Symbolerkennung**<br>
 Automatische Identifikation von Traumsymbolen mit semantischer Ähnlichkeitssuche
-
+</br>
 📚 **RAG-Pipeline**
 Kontextanreicherung durch eine Vektordatenbank mit Symbolen und echten Traumberichten
 
