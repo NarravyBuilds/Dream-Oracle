@@ -33,17 +33,23 @@ Dream Oracle behauptet nie, die eine wahre Bedeutung zu kennen — er bietet Per
 
 ## ✦ Features
 
-🔮 **Symbolerkennung** — Automatische Identifikation von Traumsymbolen mit semantischer Ähnlichkeitssuche
+🔮 **Symbolerkennung**
+Automatische Identifikation von Traumsymbolen mit semantischer Ähnlichkeitssuche
 
-📚 **RAG-Pipeline** — Kontextanreicherung durch eine Vektordatenbank mit Symbolen und echten Traumberichten
+📚 **RAG-Pipeline**
+Kontextanreicherung durch eine Vektordatenbank mit Symbolen und echten Traumberichten
 
-🏷️ **Motiv-Badges** — Visuelle Tags der erkannten Symbole über jeder Deutung
+🏷️ **Motiv-Badges**
+Visuelle Tags der erkannten Symbole über jeder Deutung
 
-🛡️ **Safety Filter** — Erkennung sensibler Inhalte mit Verweis auf professionelle Hilfsangebote
+🛡️ **Safety Filter**
+Erkennung sensibler Inhalte mit Verweis auf professionelle Hilfsangebote
 
-🌙 **Dark Aesthetic** — Handgestaltetes UI mit Cormorant Garamond, Gold-Akzenten und cinematischer Atmosphäre
+🌙 **Dark Aesthetic**
+Handgestaltetes UI mit Cormorant Garamond, Gold-Akzenten und cinematischer Atmosphäre
 
-📱 **Mobile-Ready** — Optimiert für Smartphone mit dediziertem Submit-Button
+📱 **Mobile-Ready**
+Optimiert für Smartphone mit dediziertem Submit-Button
 
 ---
 
