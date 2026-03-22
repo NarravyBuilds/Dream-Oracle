@@ -155,8 +155,6 @@ def interpret(message: str, history: list[dict]) -> str:
 
 # --- Gradio UI ---
 CSS = """
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500&display=swap');
-
 .gradio-container {
     max-width: 780px !important;
     margin: auto !important;
@@ -251,6 +249,7 @@ footer { display: none !important; }
     cursor: pointer;
     transition: all 0.3s ease;
     min-height: 44px !important;
+    width: 100% !important;
 }
 .gradio-container button.primary:hover {
     background: linear-gradient(135deg, #3A3025, #4A3F30) !important;
@@ -260,6 +259,7 @@ footer { display: none !important; }
 
 with gr.Blocks(css=CSS) as demo:
     gr.HTML("""
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500&display=swap">
         <div class="header-wrap">
             <h1>DREAM ORACLE</h1>
             <div class="tagline">Erzähl mir deinen Traum und ich helfe dir, ihn zu verstehen.</div>
@@ -269,19 +269,15 @@ with gr.Blocks(css=CSS) as demo:
 
     chatbot = gr.Chatbot(height=480, show_label=False)
 
-    with gr.Row():
-        msg = gr.Textbox(
-            placeholder="Beschreibe deinen Traum...",
-            label="Dein Traum",
-            lines=2,
-            scale=4,
-        )
-        submit_btn = gr.Button(
-            "🌙 Deuten",
-            variant="primary",
-            scale=1,
-            min_width=100,
-        )
+    msg = gr.Textbox(
+        placeholder="Beschreibe deinen Traum...",
+        label="Dein Traum",
+        lines=2,
+    )
+    submit_btn = gr.Button(
+        "🌙 Deuten",
+        variant="primary",
+    )
 
     def respond(message, history):
         history = history or []
