@@ -165,6 +165,6 @@ Vollständig lokale, offline Deutung – kein Text verlässt das Gerät
 
 *🌙 Built by [Narravy](https://github.com/NarravyBuilds)*
 
-<sub>Ein Projekt von Narravy wo Technologie auf Träume trifft.</sub>
+<sub>© Narravy</sub>
 
 </div>
