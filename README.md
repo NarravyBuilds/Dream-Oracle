@@ -27,7 +27,7 @@ Dream Oracle ist ein Traumdeutungs-Bot, der **RAG** (Retrieval-Augmented Generat
 
 > *"Die träumende Person ist die beste Expertin für ihre eigenen Träume."*
 
-Dream Oracle behauptet nie, die eine wahre Bedeutung zu kennen — er bietet Perspektiven an, keine Diagnosen.
+Dream Oracle behauptet nie, die eine wahre Bedeutung zu kennen - er bietet Perspektiven an, keine Diagnosen.
 
 ---
 
@@ -133,20 +133,27 @@ Dream-Oracle/
 
 Dream Oracle folgt klaren ethischen Leitlinien:
 
-- 🕊️ Keine absoluten Wahrheiten - nur Perspektiven und Möglichkeiten
-- 🚫 Keine medizinischen oder psychologischen Diagnosen
-- 🤝 Die träumende Person steht im Mittelpunkt
-- 🛡️ Bei sensiblen Inhalten wird statt einer Deutung ein Hinweis auf professionelle Hilfsangebote angezeigt
+- Keine absoluten Wahrheiten - nur Perspektiven und Möglichkeiten
+- Keine medizinischen oder psychologischen Diagnosen
+- Die träumende Person steht im Mittelpunkt
+- Bei sensiblen Inhalten wird statt einer Deutung ein Hinweis auf professionelle Hilfsangebote angezeigt
 
 ---
 
 ## ✦ Datenschutz
 
-- **Keine Speicherung** — Traum-Texte werden nicht geloggt, nicht in Datenbanken geschrieben, nicht getrackt
-- **Externe API** — Zur Deutung wird der Text an die Hugging Face Inference API gesendet (Llama 3.2). Der API-Anbieter könnte Anfragen temporär protokollieren
-- **Gradio Analytics** — Deaktiviert (`analytics_enabled=False`)
-- **Zukunftsvision** — Vollständig lokale und offline Deutung, sodass kein Text jemals das Gerät verlässt
-
+- **Keine Speicherung**<br>
+Traum-Texte werden nicht geloggt, nicht in Datenbanken geschrieben, nicht getrackt<br>
+</br>
+- **Externe API**<br>
+Zur Deutung wird der Text an die Hugging Face Inference API gesendet (Llama 3.2). Der API-Anbieter könnte Anfragen temporär protokollieren
+<br></br>
+- **Gradio Analytics**<br>
+Deaktiviert (`analytics_enabled=False`)<br>
+</br>
+- **Zukunftsvision**<br>
+Vollständig lokale und offline Deutung, sodass kein Text jemals das Gerät verlässt
+</br>
 ---
 
 ## ✦ Live Demo
