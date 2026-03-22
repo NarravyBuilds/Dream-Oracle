@@ -43,16 +43,20 @@ Kontextanreicherung durch eine Vektordatenbank mit Symbolen und echten Traumberi
 <br>
 🏷️ **Motiv-Badges**<br>
 Visuelle Tags der erkannten Symbole über jeder Deutung
+</br>
 <br>
 🛡️ **Safety Filter**<br>
 Erkennung sensibler Inhalte mit Verweis auf professionelle Hilfsangebote
+</br>
 <br>
 🌙 **Dark Aesthetic**<br>
 Handgestaltetes UI mit Cormorant Garamond, Gold-Akzenten und cinematischer Atmosphäre
+</br>
 <br>
 📱 **Mobile-Ready**<br>
 Optimiert für Smartphone mit dediziertem Submit-Button
-
+</br>
+<br>
 ---
 
 ## ✦ Architektur
