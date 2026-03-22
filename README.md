@@ -15,7 +15,7 @@
 
 <br>
 
-<img src="https://img.shields.io/badge/-%E2%9C%A6%20Dark%20%E2%80%A2%20Mystical%20%E2%80%A2%20Elegant%20%E2%9C%A6-1A1714?style=for-the-badge&labelColor=1A1714" alt="aesthetic">
+<img src="https://img.shields.io/badge/-%E2%9C%A6%20AI%20%E2%80%A2%20NLP%20%E2%80%A2%20PYTHON%20%E2%9C%A6-1A1714?style=for-the-badge&labelColor=1A1714" alt="aesthetic">
 
 </div>
 
