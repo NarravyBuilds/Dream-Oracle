@@ -133,10 +133,10 @@ Dream-Oracle/
 
 Dream Oracle folgt klaren ethischen Leitlinien:
 
-- Keine absoluten Wahrheiten - nur Perspektiven und Möglichkeiten
-- Keine medizinischen oder psychologischen Diagnosen
-- Die träumende Person steht im Mittelpunkt
-- Bei sensiblen Inhalten wird statt einer Deutung ein Hinweis auf professionelle Hilfsangebote angezeigt
+- Keine absoluten Wahrheiten - nur Perspektiven und Möglichkeiten.
+- Keine medizinischen oder psychologischen Diagnosen.
+- Die träumende Person steht im Mittelpunkt.
+- Bei sensiblen Inhalten wird statt einer Deutung ein Hinweis auf professionelle Hilfsangebote angezeigt.
 
 ---
 
@@ -146,7 +146,7 @@ Dream Oracle folgt klaren ethischen Leitlinien:
 Traum-Texte werden nicht geloggt, nicht in Datenbanken geschrieben, nicht getrackt  
 
 **Externe API**  
-Text wird an die Hugging Face Inference API (Llama 3.2) gesendet.  
+Text wird an die Hugging Face Inference API (`Llama 3.2`) gesendet.  
 Der Anbieter könnte Anfragen temporär protokollieren  
 
 **Gradio Analytics**  
