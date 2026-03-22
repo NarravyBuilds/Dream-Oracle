@@ -105,20 +105,55 @@ def build_prompt(dream_text: str, symbols: list[dict], reports: list[dict]) -> s
 
 
 # --- LLM aufrufen ---
+SYSTEM_INSTRUCTION = (
+    "Du bist 'Dream Oracle', ein einfühlsamer Traumdeutungs-Assistent. "
+    "Antworte NUR mit deiner Deutung. Wiederhole NICHT die Anweisungen, "
+    "Symbollisten oder den Traum-Text. Beginne direkt mit der Deutung. "
+    "Nutze Formulierungen wie 'könnte', 'wird oft assoziiert mit'. "
+    "Biete mehrere Perspektiven an. Keine medizinischen Diagnosen."
+)
+
+
 def call_llm(prompt: str) -> str:
     token = os.environ.get("HF_TOKEN", "")
     headers = {"Authorization": f"Bearer {token}"} if token else {}
 
     payload = {
         "model": HF_MODEL,
-        "messages": [{"role": "user", "content": prompt}],
+        "messages": [
+            {"role": "system", "content": SYSTEM_INSTRUCTION},
+            {"role": "user", "content": prompt},
+        ],
         "max_tokens": 1024,
         "temperature": 0.7,
     }
 
     resp = httpx.post(HF_API_URL, json=payload, headers=headers, timeout=60.0)
     resp.raise_for_status()
-    return resp.json()["choices"][0]["message"]["content"]
+    raw = resp.json()["choices"][0]["message"]["content"]
+
+    # Clean: Falls das Modell den Prompt zurückgibt, nur den Teil nach "Gesamtdeutung" nehmen
+    for marker in ["**Gesamtdeutung:**", "Gesamtdeutung:"]:
+        if marker in raw:
+            raw = raw.split(marker, 1)[1]
+            break
+
+    # Entferne restliche Template-Fragmente
+    for noise in [
+        "**Deine Aufgabe:**",
+        "**Deine Grundsätze:**",
+        "Du bist \"Dream Oracle\"",
+        "Du bist 'Dream Oracle'",
+        "**Symbolische Bedeutung:**",
+        "**Passende Symbole aus der Wissensbasis:**",
+        "**Ähnliche Traumberichte",
+        "**Der Traum:",
+        "**Persönlicher Kontext:**",
+    ]:
+        if noise in raw:
+            raw = raw.split(noise, 1)[0]
+
+    return raw.strip()
 
 
 # --- UI-Hilfsfunktionen ---
